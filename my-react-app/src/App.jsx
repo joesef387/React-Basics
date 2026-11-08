@@ -1,61 +1,173 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0);
   const [name, setName] = useState('');
+  const [course, setCourse] = useState('');
+  const [students, setStudents] = useState([]);
+  const [error, setError] = useState('');
+  const nextStudentId = useRef(1);
 
-  const decreaseCount = () => setCount((current) => current - 1);
-  const increaseCount = () => setCount((current) => current + 1);
-  const resetCount = () => setCount(0);
+  function handleSubmit(event) {
+    event.preventDefault();
 
-  const message = count % 2 === 0 ? 'Even number' : 'Odd number';
-  const greeting = name.trim() ? `Hello, ${name}! Welcome to my React app.` : '';
-  const currentYear = new Date().getFullYear();
+    const studentName = name.trim();
+    const studentCourse = course.trim();
+
+    if (!studentName || !studentCourse) {
+      setError('Please enter both a student name and a course.');
+      return;
+    }
+
+    setStudents((currentStudents) => [
+      ...currentStudents,
+      {
+        id: nextStudentId.current++,
+        name: studentName,
+        course: studentCourse,
+      },
+    ]);
+    setName('');
+    setCourse('');
+    setError('');
+  }
+
+  function handleDelete(studentId) {
+    setStudents((currentStudents) =>
+      currentStudents.filter((student) => student.id !== studentId),
+    );
+  }
 
   return (
     <div className="app-shell">
-      <main className="app-card">
-        <h1>My First React App</h1>
-        <p className="intro">
-          I am learning React and building an interactive app to practice JavaScript, state,
-          events, and conditional rendering.
-        </p>
+      <header className="topbar">
+        <div className="topbar-content">
+          <span className="brand-mark" aria-hidden="true">
+            S
+          </span>
+          <span className="brand-name">Student Portal</span>
+        </div>
+      </header>
 
-        <div className="counter-section">
-          <div className="counter-box">
-            <button type="button" onClick={decreaseCount} aria-label="Decrease count">
-              −
-            </button>
-            <span className="count-value" aria-live="polite">
-              {count}
-            </span>
-            <button type="button" onClick={increaseCount} aria-label="Increase count">
-              +
-            </button>
-          </div>
+      <main className="page-content">
+        <section className="welcome">
+          <p className="eyebrow">REGISTRATION</p>
+          <h1>Student Registration</h1>
+          <p className="welcome-copy">
+            Add students to your course roster and keep track of registrations.
+          </p>
+        </section>
 
-          <button type="button" className="reset-btn" onClick={resetCount}>
-            Reset
-          </button>
+        <div className="content-grid">
+          <section className="panel form-panel" aria-labelledby="form-heading">
+            <div className="panel-heading">
+              <span className="section-icon" aria-hidden="true">
+                +
+              </span>
+              <div>
+                <h2 id="form-heading">Register a student</h2>
+                <p>Enter the student details below.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="field">
+                <label htmlFor="student-name">Student name</label>
+                <input
+                  id="student-name"
+                  name="studentName"
+                  type="text"
+                  value={name}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    setError('');
+                  }}
+                  placeholder="e.g. Alex Johnson"
+                  autoComplete="name"
+                  required
+                />
+              </div>
+
+              <div className="field">
+                <label htmlFor="student-course">Course</label>
+                <input
+                  id="student-course"
+                  name="course"
+                  type="text"
+                  value={course}
+                  onChange={(event) => {
+                    setCourse(event.target.value);
+                    setError('');
+                  }}
+                  placeholder="e.g. Introduction to React"
+                  required
+                />
+              </div>
+
+              {error && (
+                <p className="form-error" role="alert">
+                  {error}
+                </p>
+              )}
+
+              <button className="submit-button" type="submit">
+                Register student
+                <span aria-hidden="true">→</span>
+              </button>
+            </form>
+          </section>
+
+          <section className="panel roster-panel" aria-labelledby="roster-heading">
+            <div className="roster-heading">
+              <div className="panel-heading">
+                <span className="section-icon roster-icon" aria-hidden="true">
+                  ✓
+                </span>
+                <div>
+                  <h2 id="roster-heading">Registered students</h2>
+                  <p>Your current course roster.</p>
+                </div>
+              </div>
+              <span className="student-count" aria-label={`${students.length} students`}>
+                {students.length}
+              </span>
+            </div>
+
+            {students.length === 0 ? (
+              <div className="empty-state" aria-live="polite">
+                <span className="empty-icon" aria-hidden="true">
+                  ☷
+                </span>
+                <h3>No students yet</h3>
+                <p>Registered students will appear here.</p>
+              </div>
+            ) : (
+              <ul className="student-list" aria-live="polite">
+                {students.map((student) => (
+                  <li className="student-card" key={student.id}>
+                    <span className="student-avatar" aria-hidden="true">
+                      {student.name.charAt(0).toUpperCase()}
+                    </span>
+                    <div className="student-details">
+                      <h3>{student.name}</h3>
+                      <p>{student.course}</p>
+                    </div>
+                    <button
+                      className="delete-button"
+                      type="button"
+                      onClick={() => handleDelete(student.id)}
+                      aria-label={`Delete ${student.name}`}
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
 
-        <div className="input-section">
-          <label htmlFor="name-input">Your name</label>
-          <input
-            id="name-input"
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Type your name"
-          />
-        </div>
-
-        <p className={`message ${count % 2 === 0 ? 'even' : 'odd'}`}>{message}</p>
-
-        {greeting && <p className="greeting">{greeting}</p>}
-
-        <footer>© {currentYear}</footer>
+        <footer className="page-footer">Student Registration App</footer>
       </main>
     </div>
   );
